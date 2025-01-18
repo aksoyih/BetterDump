@@ -1,0 +1,27 @@
+{
+    "name": "aksoyih/better-dump",
+    "description": "A beautiful debugging tool for PHP applications with syntax highlighting and collapsible output",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Haluk Aksoy",
+            "email": "me@halukaksoy.dev"
+        }
+    ],
+    "require": {
+        "php": ">=7.4"
+    },
+    "autoload": {
+        "psr-4": {
+            "Aksoyih\\BetterDump\\": "src/"
+        },
+        "files": [
+            "src/helpers.php"
+        ]
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^9.0"
+    },
+    "minimum-stability": "stable"
+}
