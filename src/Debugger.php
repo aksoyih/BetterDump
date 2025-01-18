@@ -50,7 +50,7 @@ class Debugger
 
         foreach ($vars as $i => $var) {
             $name = 'Variable #' . ($i + 1);
-            if (preg_match('/dump\((.*?)\)/', file_get_contents($caller['file']), $matches)) {
+            if (preg_match('/[d]?dump\((.*?)\)/', file_get_contents($caller['file']), $matches)) {
                 $args = explode(',', $matches[1]);
                 if (isset($args[$i])) {
                     $name = trim($args[$i]);
@@ -90,7 +90,7 @@ class Debugger
 
             $output .= "<div class='content' style='display:none;'>";
             foreach ((array)$var as $key => $value) {
-                $output .= htmlentities($key) . " => " . formatVar($value) . "<br>";
+                $output .= htmlentities($key) . " => " . self::formatVar($value) . "<br>";
             }
             $output .= "</div>";
             return $output;
