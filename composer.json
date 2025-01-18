@@ -2,7 +2,6 @@
     "name": "aksoyih/better-dump",
     "description": "A beautiful debugging tool for PHP applications with syntax highlighting and collapsible output",
     "type": "library",
-    "version": "1.0.0",
     "keywords": ["debug", "dump", "var-dump", "dd", "pretty-dump"],
     "license": "MIT",
     "authors": [
