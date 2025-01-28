@@ -130,7 +130,7 @@ if (!function_exists('dd')) {
 
         // Control buttons
         echo '<div class="debug-controls">';
-        echo '<div class="control-button" onclick="expandAll()">⮚ Expand All</div>';
+        echo '<div class="control-button" onclick="expandAll()">↓ Expand All</div>';
         echo '<div class="control-button" onclick="toggleDebugInfo(this)">⚙️ Debug Info</div>';
         echo '</div>';
 
