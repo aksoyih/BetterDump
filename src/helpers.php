@@ -194,6 +194,50 @@ if (!function_exists('dd')) {
         die(1);
     }
 
+    function dd_a(...$vars)
+    {
+        $backtrace = debug_backtrace();
+        $caller = $backtrace[0];
+        $memoryUsage = memory_get_usage(true);
+        $peakMemoryUsage = memory_get_peak_usage(true);
+        $executionTime = round((microtime(true) - $_SERVER["REQUEST_TIME_FLOAT"]) * 1000, 2);
+
+        $requestInfo = [
+            'URL' => $_SERVER['REQUEST_URI'] ?? 'N/A',
+            'Method' => $_SERVER['REQUEST_METHOD'] ?? 'N/A',
+            'Time' => date('Y-m-d H:i:s'),
+            'Memory Used' => formatBytes($memoryUsage),
+            'Peak Memory Used' => formatBytes($peakMemoryUsage),
+            'Execution Time' => $executionTime . ' ms',
+        ];
+
+        echo '<pre style="background-color: #1e1e1e; color: #abb2bf; padding: 20px; font-family: monospace; white-space: pre-wrap; word-wrap: break-word;">';
+        echo "=== DEBUG INFO ===\n";
+        echo "File: " . $caller['file'] . "\n";
+        echo "Line: " . $caller['line'] . "\n";
+        foreach ($requestInfo as $key => $value) {
+            echo "$key: $value\n";
+        }
+        echo "\n=== VARIABLES ===\n";
+
+        foreach ($vars as $i => $var) {
+            $name = 'Variable #' . ($i + 1);
+            if (preg_match('/dd_a\((.*?)\)/', file_get_contents($caller['file']), $matches)) {
+                $args = explode(',', $matches[1]);
+                if (isset($args[$i])) {
+                    $name = trim($args[$i]);
+                }
+            }
+
+            echo "$name:\n";
+            print_r($var);
+            echo "\n\n";
+        }
+
+        echo '</pre>';
+        die(1);
+    }
+
     function formatBytes($bytes)
     {
         $sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
