@@ -386,6 +386,40 @@
         .bd-hidden {
             display: none !important;
         }
+
+        /* Image Preview */
+        .bd-image-link {
+            position: relative;
+            cursor: help;
+        }
+
+        .bd-preview {
+            display: none;
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: var(--color-panel-dark);
+            border: 1px solid var(--color-panel-border);
+            padding: 0.25rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
+            z-index: 100;
+            margin-bottom: 0.5rem;
+            width: max-content;
+            max-width: 300px;
+        }
+
+        .bd-preview img {
+            display: block;
+            max-width: 100%;
+            max-height: 200px;
+            border-radius: 0.25rem;
+        }
+
+        .bd-image-link:hover .bd-preview {
+            display: block;
+        }
     </style>
 </head>
 

@@ -26,7 +26,21 @@ class HtmlRenderer
             case ScalarRepresentation::class:
                 /** @var ScalarRepresentation $representation */
                 if (is_string($representation->value)) {
-                    return "<span class=\"syntax-string\">\"" . htmlspecialchars($representation->value, ENT_QUOTES, 'UTF-8') . '"</span>';
+                    $escapedValue = htmlspecialchars($representation->value, ENT_QUOTES, 'UTF-8');
+                    
+                    if (filter_var($representation->value, FILTER_VALIDATE_URL)) {
+                        $isImage = preg_match('/\.(jpg|jpeg|png|gif|webp|svg)$/i', parse_url($representation->value, PHP_URL_PATH));
+                        $imageClass = $isImage ? 'bd-image-link' : '';
+                        
+                        $link = "<a href=\"{$escapedValue}\" target=\"_blank\" class=\"syntax-string hover:underline {$imageClass}\">\"{$escapedValue}\"";
+                        if ($isImage) {
+                            $link .= "<span class=\"bd-preview\"><img src=\"{$escapedValue}\" alt=\"Preview\" /></span>";
+                        }
+                        $link .= "</a>";
+                        return $link;
+                    }
+                    
+                    return "<span class=\"syntax-string\">\"" . $escapedValue . '"</span>';
                 }
                 if (is_null($representation->value)) {
                     return "<span class=\"syntax-null\">null</span>";
