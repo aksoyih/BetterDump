@@ -600,9 +600,7 @@
                     <span class="material-symbols-outlined">close</span>
                 </button>
             </div>
-            <div class="modal-body" id="<?= $dumpId ?>_trace-list">
-                <!-- Trace items will be injected here -->
-            </div>
+            <div class="modal-body" id="<?= $dumpId ?>_trace-list"></div>
         </div>
     </div>
 
@@ -754,12 +752,28 @@
                     const debugData = JSON.parse(rawDataEl.textContent);
                     const cleanData = reconstructData(debugData.data);
                     
-                    // Clean path for LLM context
-                    const cleanPath = debugData.meta.file.replace(/^\/var\/www\/(html\/)?/, '');
+                    // Clean path helper
+                    const cleanPath = (path) => path ? path.replace(/^\/var\/www\/(html\/)?/, '') : 'internal';
                     
-                    const llmContext = `Context: ${cleanPath}:${debugData.meta.line}\n` +
-                                     (debugData.meta.caller ? `Caller: ${debugData.meta.caller}\n` : '') +
-                                     `\nDumped Data:\n\`\`\`json\n${JSON.stringify(cleanData, null, 2)}\n\`\`\``;
+                    // Build context
+                    let llmContext = `Context: ${cleanPath(debugData.meta.file)}:${debugData.meta.line}\n` +
+                                     (debugData.meta.caller ? `Caller: ${debugData.meta.caller}\n` : '');
+
+                    // Build Trace
+                    if (debugData.meta.trace && Array.isArray(debugData.meta.trace) && debugData.meta.trace.length > 0) {
+                        llmContext += '\nStack Trace:\n';
+                        debugData.meta.trace.forEach((item, index) => {
+                            const file = cleanPath(item.file);
+                            const line = item.line ? `:${item.line}` : '';
+                            let method = item.function;
+                            if (item.class) {
+                                method = `${item.class}${item.type}${item.function}`;
+                            }
+                            llmContext += `#${index} ${file}${line} ${method}()\n`;
+                        });
+                    }
+
+                    llmContext += `\nDumped Data:\n\`\`\`json\n${JSON.stringify(cleanData, null, 2)}\n\`\`\``;
 
                     await navigator.clipboard.writeText(llmContext);
                     
