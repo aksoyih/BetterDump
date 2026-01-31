@@ -1,4 +1,4 @@
-# BetterDump V2
+# BetterDump
 
 A professional-grade debugging library for PHP that provides a high-fidelity visual representation of variables, tailored for modern web development environments.
 
