@@ -29,7 +29,9 @@ class HtmlRenderer
                     $escapedValue = htmlspecialchars($representation->value, ENT_QUOTES, 'UTF-8');
                     
                     if (filter_var($representation->value, FILTER_VALIDATE_URL)) {
-                        $isImage = preg_match('/\.(jpg|jpeg|png|gif|webp|svg)$/i', parse_url($representation->value, PHP_URL_PATH));
+                        $path = parse_url($representation->value, PHP_URL_PATH);
+                        $path = is_string($path) ? $path : '';
+                        $isImage = preg_match('/\.(jpg|jpeg|png|gif|webp|svg)$/i', $path);
                         $imageClass = $isImage ? 'bd-image-link' : '';
                         
                         $link = "<a href=\"{$escapedValue}\" target=\"_blank\" class=\"syntax-string hover:underline {$imageClass}\">\"{$escapedValue}\"";
