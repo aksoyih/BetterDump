@@ -1,6 +1,8 @@
-# Better Dump
+# BetterDump V2
 
-A beautiful debugging tool for PHP applications with syntax highlighting and collapsible output.
+A professional-grade debugging library for PHP that provides a high-fidelity visual representation of variables, tailored for modern web development environments.
+
+![Screenshot](https://i.imgur.com/your-screenshot.png) <!-- TODO: Replace with actual screenshot -->
 
 ## Installation
 
@@ -12,21 +14,35 @@ composer require aksoyih/better-dump
 
 ```php
 // Simple usage
-dd($variable);
+bd($variable);
 
 // Multiple variables
-dd($var1, $var2, $var3);
+bd($var1, $var2, $var3);
+
+// Labeled dump
+bd($user, 'User Object');
+```
+
+### Configuration
+
+You can configure the editor to open files in. The default is `vscode`.
+
+```php
+use Aksoyih\BetterDump;
+
+// Supported editors: 'vscode', 'phpstorm'
+BetterDump::setEditor('phpstorm');
 ```
 
 ## Features
 
-- Beautiful syntax highlighting
-- Collapsible arrays and objects
-- Memory usage tracking
-- Execution time monitoring
-- Request information
-- URL detection and linking
-- Expandable/collapsible sections
+- Modern, beautiful syntax highlighting
+- Collapsible arrays and objects with depth limit
+- Recursion detection
+- File path linking to your editor (VSCode & PhpStorm)
+- Execution time and memory usage metrics
+- "Called from" trace to quickly identify the source
+- Zero-dependency, inlined UI
 
 ## License
 
