@@ -22,7 +22,6 @@ class BetterDump
     public static function dump(mixed $data, ?string $label = null): void
     {
         $startTime = $_SERVER["REQUEST_TIME_FLOAT"] ?? microtime(true);
-        $startMemory = memory_get_usage();
 
         // Pass the backtrace to the helper methods
         $backtrace = debug_backtrace();
