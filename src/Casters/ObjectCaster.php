@@ -6,7 +6,6 @@ use Aksoyih\Parser;
 use Aksoyih\Representations\ObjectRepresentation;
 use Aksoyih\Representations\PropertyRepresentation;
 use Aksoyih\Representations\Representation;
-use ReflectionClass;
 use ReflectionProperty;
 
 class ObjectCaster implements Caster
