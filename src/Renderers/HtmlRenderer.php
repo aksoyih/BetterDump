@@ -8,7 +8,7 @@ use Aksoyih\Representations\ScalarRepresentation;
 
 class HtmlRenderer
 {
-    public function render(Metadata $metadata, Representation $representation, string $editor): string
+    public function render(Metadata $metadata, Representation $representation, string $editor, string $dumpId): string
     {
         $templatePath = __DIR__ . '/../Templates/template.php';
 

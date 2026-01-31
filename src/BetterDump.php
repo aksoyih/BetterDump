@@ -33,11 +33,14 @@ class BetterDump
             $caller['file'] ?? 'unknown',
             $caller['line'] ?? 0,
             $secondaryTrace, // Use the new secondary trace method
+            array_values(self::getCleanTrace($backtrace)),
             ($endTime - $startTime) * 1000,
             $endMemory, // Use the end memory, not the difference
             memory_get_peak_usage(),
             $label
         );
+
+        $dumpId = uniqid('bd_');
 
         if (in_array(php_sapi_name(), ['cli', 'phpdbg'])) {
             $renderer = new \Aksoyih\Renderers\CliRenderer();
@@ -45,9 +48,38 @@ class BetterDump
         } else {
             ob_start();
             $renderer = new \Aksoyih\Renderers\HtmlRenderer();
-            echo $renderer->render($metadata, $representation, self::$editor);
+            echo $renderer->render($metadata, $representation, self::$editor, $dumpId);
             ob_end_flush();
         }
+    }
+
+    /**
+     * Filter the backtrace to remove internal library calls.
+     */
+    private static function getCleanTrace(array $backtrace): array
+    {
+        $cleanTrace = [];
+        foreach ($backtrace as $trace) {
+            // Filter by Class (internal library classes)
+            if (isset($trace['class']) && str_starts_with($trace['class'], 'Aksoyih\\')) {
+                continue;
+            }
+
+            // Filter by specific file (helpers.php) for the global function wrapper
+            // Check if it's the specific helpers file of this package to avoid false positives
+            if (isset($trace['file']) && str_ends_with($trace['file'], DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'helpers.php')) {
+                continue;
+            }
+            
+            // Also catch the case where helpers.php might be loaded differently or symlinked
+            // If the function is 'bd' and we are in a file named helpers.php, skip it.
+            if (isset($trace['function']) && $trace['function'] === 'bd' && isset($trace['file']) && str_ends_with($trace['file'], 'helpers.php')) {
+                continue;
+            }
+
+            $cleanTrace[] = $trace;
+        }
+        return $cleanTrace;
     }
 
     /**

@@ -49,6 +49,12 @@
             overflow: hidden;
         }
 
+        .bd-wrapper {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
         /* Header */
         header {
             height: 3.5rem;
@@ -69,6 +75,11 @@
             align-items: center;
             gap: 0.75rem;
             overflow: hidden;
+        }
+
+        .header-right {
+            margin-left: auto; /* Push to right */
+            flex-shrink: 0;
         }
 
         .icon-box {
@@ -420,10 +431,88 @@
         .bd-image-link:hover .bd-preview {
             display: block;
         }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(2px);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background-color: var(--color-panel-dark);
+            border: 1px solid var(--color-panel-border);
+            border-radius: 0.5rem;
+            width: 90%;
+            max-width: 800px;
+            max-height: 80vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-header {
+            padding: 1rem;
+            border-bottom: 1px solid var(--color-panel-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--color-text-main);
+        }
+
+        .modal-body {
+            padding: 1rem;
+            overflow-y: auto;
+        }
+
+        .trace-item {
+            padding: 0.75rem 0;
+            border-bottom: 1px solid rgba(48, 54, 61, 0.3);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .trace-item:last-child {
+            border-bottom: none;
+        }
+
+        .trace-file {
+            font-size: 0.75rem;
+            color: var(--color-text-comment);
+            margin-bottom: 0.25rem;
+            display: block;
+        }
+
+        .trace-method {
+            color: var(--color-text-main);
+            font-size: 0.875rem;
+        }
+
+        .trace-arg {
+            color: var(--color-text-comment);
+        }
     </style>
 </head>
 
 <body>
+    <div id="<?= $dumpId ?>" class="bd-wrapper">
     <!-- Top Navigation Bar -->
     <header>
         <!-- Left: Context -->
@@ -461,8 +550,8 @@
         <!-- Right: Metrics & Actions -->
         <div class="header-right">
             <!-- Search Input -->
-            <div class="search-container" id="search-container">
-                <input type="text" id="search-input" class="search-input" placeholder="Search..." autocomplete="off">
+            <div class="search-container" id="<?= $dumpId ?>_search-container">
+                <input type="text" id="<?= $dumpId ?>_search-input" class="search-input" placeholder="Search..." autocomplete="off">
             </div>
 
             <!-- Metrics Pills -->
@@ -479,13 +568,16 @@
             <div class="divider"></div>
             <!-- Action Buttons -->
             <div class="actions">
-                <button id="search-toggle-btn" class="action-btn" title="Search">
+                <button id="<?= $dumpId ?>_search-toggle-btn" class="action-btn" title="Search">
                     <span class="material-symbols-outlined" style="font-size: 20px;">search</span>
                 </button>
-                <button id="copy-output-btn" class="action-btn" title="Copy Output">
+                <button id="<?= $dumpId ?>_trace-btn" class="action-btn" title="Stack Trace">
+                    <span class="material-symbols-outlined" style="font-size: 20px;">history</span>
+                </button>
+                <button id="<?= $dumpId ?>_copy-output-btn" class="action-btn" title="Copy Output">
                     <span class="material-symbols-outlined" style="font-size: 20px;">content_copy</span>
                 </button>
-                <button id="collapse-all-btn" class="action-btn" title="Collapse All">
+                <button id="<?= $dumpId ?>_collapse-all-btn" class="action-btn" title="Collapse All">
                     <span class="material-symbols-outlined" style="font-size: 20px;">unfold_less</span>
                 </button>
             </div>
@@ -493,11 +585,27 @@
     </header>
     <!-- Main Content Area -->
     <main>
-        <div class="container" id="dump-container">
+        <div class="container" id="<?= $dumpId ?>_dump-container">
             <?= $this->renderRepresentation($representation) ?>
             <div style="height: 5rem;"></div> <!-- Bottom Padding -->
         </div>
     </main>
+
+    <!-- Stack Trace Modal -->
+    <div id="<?= $dumpId ?>_trace-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Stack Trace</h3>
+                <button id="<?= $dumpId ?>_close-trace-btn" class="action-btn">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <div class="modal-body" id="<?= $dumpId ?>_trace-list">
+                <!-- Trace items will be injected here -->
+            </div>
+        </div>
+    </div>
+
     <!-- Footer Status -->
     <footer>
         <div class="footer-left">
@@ -512,7 +620,7 @@
         </div>
     </footer>
 
-    <script id="bd-raw-data" type="application/json">
+    <script id="<?= $dumpId ?>_raw-data" type="application/json">
         <?= json_encode([
             'meta' => $metadata,
             'data' => $representation
@@ -520,15 +628,21 @@
     </script>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const collapseAllBtn = document.getElementById('collapse-all-btn');
-            const copyOutputBtn = document.getElementById('copy-output-btn');
-            const searchToggleBtn = document.getElementById('search-toggle-btn');
-            const searchContainer = document.getElementById('search-container');
-            const searchInput = document.getElementById('search-input');
-            const dumpContainer = document.getElementById('dump-container');
+        (function() {
+            const dumpId = '<?= $dumpId ?>';
+            const collapseAllBtn = document.getElementById(dumpId + '_collapse-all-btn');
+            const copyOutputBtn = document.getElementById(dumpId + '_copy-output-btn');
+            const searchToggleBtn = document.getElementById(dumpId + '_search-toggle-btn');
+            const traceBtn = document.getElementById(dumpId + '_trace-btn');
             
-            const allDetails = document.querySelectorAll('details');
+            const searchContainer = document.getElementById(dumpId + '_search-container');
+            const searchInput = document.getElementById(dumpId + '_search-input');
+            const dumpContainer = document.getElementById(dumpId + '_dump-container');
+            const traceModal = document.getElementById(dumpId + '_trace-modal');
+            const traceList = document.getElementById(dumpId + '_trace-list');
+            const closeTraceBtn = document.getElementById(dumpId + '_close-trace-btn');
+            
+            const allDetails = dumpContainer.querySelectorAll('details');
             let allExpanded = true;
 
             // Collapse/Expand All
@@ -541,11 +655,59 @@
                 collapseAllBtn.title = allExpanded ? 'Collapse All' : 'Expand All';
             });
 
+            // Stack Trace Logic
+            traceBtn.addEventListener('click', () => {
+                traceModal.classList.add('active');
+                if (traceList.innerHTML.trim() === '') {
+                    const rawDataEl = document.getElementById(dumpId + '_raw-data');
+                    if (rawDataEl) {
+                        const debugData = JSON.parse(rawDataEl.textContent);
+                        renderTrace(debugData.meta.trace);
+                    }
+                }
+            });
+
+            closeTraceBtn.addEventListener('click', () => {
+                traceModal.classList.remove('active');
+            });
+
+            traceModal.addEventListener('click', (e) => {
+                if (e.target === traceModal) {
+                    traceModal.classList.remove('active');
+                }
+            });
+
+            function renderTrace(trace) {
+                if (!trace || !Array.isArray(trace) || trace.length === 0) {
+                    traceList.innerHTML = '<div class="trace-item" style="text-align: center; color: var(--color-text-comment);">No stack trace available</div>';
+                    return;
+                }
+
+                let html = '';
+                trace.forEach((item, index) => {
+                    const file = item.file ? item.file.replace(/^\/var\/www\/(html\/)?/, '') : 'internal';
+                    const line = item.line ? `:${item.line}` : '';
+                    let method = item.function;
+                    if (item.class) {
+                        method = `${item.class}${item.type}${item.function}`;
+                    }
+                    
+                    html += `
+                        <div class="trace-item">
+                            <span class="trace-file">#${index} ${file}${line}</span>
+                            <div class="trace-method">
+                                ${method}<span class="trace-arg">()</span>
+                            </div>
+                        </div>
+                    `;
+                });
+                traceList.innerHTML = html;
+            }
+
             // Helper to reconstruct clean data from Representation AST
             function reconstructData(node) {
                 if (!node) return null;
                 
-                // Determine type based on properties since we don't have PHP classes here
                 // Scalar
                 if (node.hasOwnProperty('type') && node.hasOwnProperty('value') && !node.hasOwnProperty('id')) {
                     return node.value;
@@ -576,19 +738,8 @@
                     return `resource(${node.type}) #${node.id}`;
                 }
                 
-                // Recursion/MaxDepth (empty classes in PHP json_encode as {})
-                // We might need a better way to detect these if they come across as empty objects
-                // But typically they are distinct classes. 
-                // Since json_encode of empty object is {}, let's check context or rely on default.
-                // Actually, json_encode of standard class with no props is {}.
-                // Let's assume complex objects that don't match above are special markers if empty.
-                
-                // Recursion/MaxDepth don't have props, so they look like empty objects {}
-                // or we can try to guess. For now, let's just return a placeholder if we can't identify.
-                // Ideally, PHP json_encode would include a type field, but we used DTOs.
-                // Let's check if it is exactly an empty object, it might be one of those markers.
                 if (Object.keys(node).length === 0) {
-                    return '...'; // Recursion or Max Depth
+                    return '...'; 
                 }
 
                 return node;
@@ -597,7 +748,7 @@
             // Copy Output
             copyOutputBtn.addEventListener('click', async () => {
                 try {
-                    const rawDataEl = document.getElementById('bd-raw-data');
+                    const rawDataEl = document.getElementById(dumpId + '_raw-data');
                     if (!rawDataEl) throw new Error('No debug data found');
                     
                     const debugData = JSON.parse(rawDataEl.textContent);
@@ -633,7 +784,7 @@
                     searchInput.focus();
                 } else {
                     searchInput.value = '';
-                    performSearch(''); // Clear search when closing
+                    performSearch('');
                 }
             });
 
@@ -645,27 +796,19 @@
             function performSearch(term) {
                 term = term.toLowerCase().trim();
                 
-                // Remove previous highlights
                 const highlighted = dumpContainer.querySelectorAll('.bd-highlight');
                 highlighted.forEach(el => {
-                    el.outerHTML = el.textContent; // Unwrap
+                    el.outerHTML = el.textContent;
                 });
                 
-                // Show everything if term is empty
                 if (!term) {
                     dumpContainer.querySelectorAll('.bd-hidden').forEach(el => el.classList.remove('bd-hidden'));
-                    // Restore original expanded state? No, keep user's current state or default.
                     return;
                 }
 
-                // Hide all rows and details first
                 const allRows = dumpContainer.querySelectorAll('.bd-row');
                 allRows.forEach(row => row.classList.add('bd-hidden'));
                 
-                const allSummaries = dumpContainer.querySelectorAll('.bd-summary');
-                // We don't hide summaries directly usually, but their parent details container
-                
-                // Find matches
                 const treeWalker = document.createTreeWalker(dumpContainer, NodeFilter.SHOW_TEXT, null, false);
                 const nodesToHighlight = [];
 
@@ -676,22 +819,15 @@
                     }
                 }
 
-                if (nodesToHighlight.length === 0) {
-                     return; // Nothing found
-                }
+                if (nodesToHighlight.length === 0) return;
 
-                // Process matches
                 nodesToHighlight.forEach(node => {
                     const parent = node.parentElement;
-                    
-                    // Highlight (simple replacement)
                     const regex = new RegExp(`(${term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
-                    // Note: This is destructive to event listeners if any were attached to text, but we don't have any on text nodes.
                     if (!parent.classList.contains('bd-highlight')) {
                          parent.innerHTML = parent.innerHTML.replace(regex, '<span class="bd-highlight">$1</span>');
                     }
 
-                    // Reveal DOM path
                     let current = parent;
                     while (current && current !== dumpContainer) {
                         if (current.classList.contains('bd-row')) {
@@ -699,16 +835,14 @@
                         }
                         if (current.tagName === 'DETAILS') {
                             current.open = true;
-                            current.classList.remove('bd-hidden'); // Ensure details itself is visible
-                            
-                            // Also show the summary of this details
-                            // (Summary is usually visible if details is visible)
+                            current.classList.remove('bd-hidden');
                         }
                         current = current.parentElement;
                     }
                 });
             }
-        });
+        })();
     </script>
+    </div>
 </body>
 </html>

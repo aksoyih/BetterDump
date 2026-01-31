@@ -8,6 +8,7 @@ class Metadata
         public string $file,
         public int $line,
         public ?string $caller,
+        public array $trace,
         public float $executionTime,
         public float $memoryUsage,
         public float $peakMemoryUsage,
