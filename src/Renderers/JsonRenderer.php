@@ -19,9 +19,11 @@ class JsonRenderer
         foreach ($metadata->trace as $index => $item) {
             $file = isset($item['file']) ? $this->cleanPath($item['file']) : 'internal';
             $line = $item['line'] ?? '';
-            $method = $item['function'];
+            $method = $item['function'] ?? 'global';
             if (isset($item['class'])) {
-                $method = $item['class'] . $item['type'] . $item['function'];
+                $type = $item['type'] ?? '::';
+                $function = $item['function'] ?? '';
+                $method = $item['class'] . $type . $function;
             }
             $trace[] = "#{$index} {$file}:{$line} {$method}()";
         }
