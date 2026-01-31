@@ -1,1 +1,0 @@
-{"version":2,"defects":{"Aksoyih\\Tests\\IntegrationTest::testRecursion":7},"times":{"Aksoyih\\Tests\\IntegrationTest::testObjectParsing":0.007,"Aksoyih\\Tests\\IntegrationTest::testRecursion":0,"Aksoyih\\Tests\\IntegrationTest::testMaxDepth":0,"Aksoyih\\Tests\\IntegrationTest::testResource":0,"Aksoyih\\Tests\\ParserTest::testParseArray":0}}

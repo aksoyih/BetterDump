@@ -1,3 +1,4 @@
 /vendor/
 /idea/
 /ai/*
+.phpunit.result.cache
