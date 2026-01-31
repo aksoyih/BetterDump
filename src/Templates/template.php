@@ -349,21 +349,42 @@
             color: #d1d5db;
         }
 
-        /* Scrollbar */
-        ::-webkit-scrollbar {
-            width: 10px;
-            height: 10px;
+        /* Search Input */
+        .search-container {
+            display: none; /* Hidden by default */
+            margin-right: 0.5rem;
         }
-        ::-webkit-scrollbar-track {
-            background: #0d1117;
+
+        .search-container.active {
+            display: block;
         }
-        ::-webkit-scrollbar-thumb {
-            background: #30363d;
-            border-radius: 5px;
-            border: 2px solid #0d1117;
+
+        .search-input {
+            background-color: #21262d;
+            border: 1px solid var(--color-panel-border);
+            color: var(--color-text-main);
+            border-radius: 0.25rem;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.875rem;
+            font-family: 'Inter', sans-serif;
+            outline: none;
+            width: 150px;
+            transition: width 0.2s;
         }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #484f58;
+
+        .search-input:focus {
+            border-color: var(--color-primary);
+            width: 200px;
+        }
+
+        .bd-highlight {
+            background-color: rgba(250, 204, 21, 0.25); /* Yellow highlight */
+            color: #fff;
+            border-radius: 2px;
+        }
+
+        .bd-hidden {
+            display: none !important;
         }
     </style>
 </head>
@@ -383,12 +404,20 @@
             <?php endif; ?>
             <div class="file-info">
                 <?php
-                $filePath = htmlspecialchars($metadata->file, ENT_QUOTES, 'UTF-8');
+                // Clean up file path for display and editor linking
+                // Removing common container/server prefixes to reduce noise
+                $rawFilePath = $metadata->file;
+                $cleanFilePath = preg_replace('#^/var/www/(html/)?#', '', $rawFilePath);
+                
+                $filePath = htmlspecialchars($cleanFilePath, ENT_QUOTES, 'UTF-8');
                 $line = htmlspecialchars($metadata->line, ENT_QUOTES, 'UTF-8');
-                $editorLink = $editor === 'vscode' ? "vscode://file/{$filePath}:{$line}" : "phpstorm://open?file={$filePath}&line={$line}";
+                
+                // For the editor link, we use the cleaned path as requested. 
+                // Note: Users might need path mapping if their local path differs significantly.
+                $editorLink = $editor === 'vscode' ? "vscode://file/{$cleanFilePath}:{$line}" : "phpstorm://open?file={$cleanFilePath}&line={$line}";
                 ?>
                 <a class="file-link" href="<?= $editorLink ?>">
-                    <?= basename($filePath) ?>:<?= $line ?>
+                    <?= basename($cleanFilePath) ?>:<?= $line ?>
                 </a>
                 <?php if ($metadata->caller): ?>
                     <span class="caller-info">Called from <?= htmlspecialchars($metadata->caller, ENT_QUOTES, 'UTF-8') ?></span>
@@ -397,6 +426,11 @@
         </div>
         <!-- Right: Metrics & Actions -->
         <div class="header-right">
+            <!-- Search Input -->
+            <div class="search-container" id="search-container">
+                <input type="text" id="search-input" class="search-input" placeholder="Search..." autocomplete="off">
+            </div>
+
             <!-- Metrics Pills -->
             <div class="metrics">
                 <div class="metric-pill">
@@ -411,7 +445,7 @@
             <div class="divider"></div>
             <!-- Action Buttons -->
             <div class="actions">
-                <button class="action-btn" title="Search">
+                <button id="search-toggle-btn" class="action-btn" title="Search">
                     <span class="material-symbols-outlined" style="font-size: 20px;">search</span>
                 </button>
                 <button id="copy-output-btn" class="action-btn" title="Copy Output">
@@ -425,7 +459,7 @@
     </header>
     <!-- Main Content Area -->
     <main>
-        <div class="container">
+        <div class="container" id="dump-container">
             <?= $this->renderRepresentation($representation) ?>
             <div style="height: 5rem;"></div> <!-- Bottom Padding -->
         </div>
@@ -444,14 +478,26 @@
         </div>
     </footer>
 
+    <script id="bd-raw-data" type="application/json">
+        <?= json_encode([
+            'meta' => $metadata,
+            'data' => $representation
+        ], JSON_INVALID_UTF8_SUBSTITUTE | JSON_PARTIAL_OUTPUT_ON_ERROR) ?>
+    </script>
+
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             const collapseAllBtn = document.getElementById('collapse-all-btn');
             const copyOutputBtn = document.getElementById('copy-output-btn');
+            const searchToggleBtn = document.getElementById('search-toggle-btn');
+            const searchContainer = document.getElementById('search-container');
+            const searchInput = document.getElementById('search-input');
+            const dumpContainer = document.getElementById('dump-container');
+            
             const allDetails = document.querySelectorAll('details');
-
             let allExpanded = true;
 
+            // Collapse/Expand All
             collapseAllBtn.addEventListener('click', () => {
                 allExpanded = !allExpanded;
                 allDetails.forEach(detail => {
@@ -461,9 +507,173 @@
                 collapseAllBtn.title = allExpanded ? 'Collapse All' : 'Expand All';
             });
 
-            copyOutputBtn.addEventListener('click', () => {
-                alert('Copy to clipboard functionality is not implemented yet.');
+            // Helper to reconstruct clean data from Representation AST
+            function reconstructData(node) {
+                if (!node) return null;
+                
+                // Determine type based on properties since we don't have PHP classes here
+                // Scalar
+                if (node.hasOwnProperty('type') && node.hasOwnProperty('value') && !node.hasOwnProperty('id')) {
+                    return node.value;
+                }
+                
+                // Array
+                if (node.hasOwnProperty('items') && node.hasOwnProperty('count')) {
+                    const result = Array.isArray(node.items) ? [] : {};
+                    for (const key in node.items) {
+                        result[key] = reconstructData(node.items[key]);
+                    }
+                    return result;
+                }
+                
+                // Object
+                if (node.hasOwnProperty('className') && node.hasOwnProperty('properties')) {
+                    const obj = { '@class': node.className };
+                    if (Array.isArray(node.properties)) {
+                        node.properties.forEach(prop => {
+                             obj[prop.name] = reconstructData(prop.value);
+                        });
+                    }
+                    return obj;
+                }
+                
+                // Resource
+                if (node.hasOwnProperty('type') && node.hasOwnProperty('id')) {
+                    return `resource(${node.type}) #${node.id}`;
+                }
+                
+                // Recursion/MaxDepth (empty classes in PHP json_encode as {})
+                // We might need a better way to detect these if they come across as empty objects
+                // But typically they are distinct classes. 
+                // Since json_encode of empty object is {}, let's check context or rely on default.
+                // Actually, json_encode of standard class with no props is {}.
+                // Let's assume complex objects that don't match above are special markers if empty.
+                
+                // Recursion/MaxDepth don't have props, so they look like empty objects {}
+                // or we can try to guess. For now, let's just return a placeholder if we can't identify.
+                // Ideally, PHP json_encode would include a type field, but we used DTOs.
+                // Let's check if it is exactly an empty object, it might be one of those markers.
+                if (Object.keys(node).length === 0) {
+                    return '...'; // Recursion or Max Depth
+                }
+
+                return node;
+            }
+
+            // Copy Output
+            copyOutputBtn.addEventListener('click', async () => {
+                try {
+                    const rawDataEl = document.getElementById('bd-raw-data');
+                    if (!rawDataEl) throw new Error('No debug data found');
+                    
+                    const debugData = JSON.parse(rawDataEl.textContent);
+                    const cleanData = reconstructData(debugData.data);
+                    
+                    // Clean path for LLM context
+                    const cleanPath = debugData.meta.file.replace(/^\/var\/www\/(html\/)?/, '');
+                    
+                    const llmContext = `Context: ${cleanPath}:${debugData.meta.line}\n` +
+                                     (debugData.meta.caller ? `Caller: ${debugData.meta.caller}\n` : '') +
+                                     `\nDumped Data:\n\`\`\`json\n${JSON.stringify(cleanData, null, 2)}\n\`\`\``;
+
+                    await navigator.clipboard.writeText(llmContext);
+                    
+                    // Visual feedback
+                    const originalIcon = copyOutputBtn.innerHTML;
+                    copyOutputBtn.innerHTML = '<span class="material-symbols-outlined" style="font-size: 20px; color: #4ade80;">check</span>';
+                    
+                    setTimeout(() => {
+                        copyOutputBtn.innerHTML = originalIcon;
+                    }, 2000);
+                    
+                } catch (err) {
+                    console.error('Failed to copy: ', err);
+                    alert('Failed to copy to clipboard');
+                }
             });
+
+            // Search Toggle
+            searchToggleBtn.addEventListener('click', () => {
+                searchContainer.classList.toggle('active');
+                if (searchContainer.classList.contains('active')) {
+                    searchInput.focus();
+                } else {
+                    searchInput.value = '';
+                    performSearch(''); // Clear search when closing
+                }
+            });
+
+            // Search Logic
+            searchInput.addEventListener('input', (e) => {
+                performSearch(e.target.value);
+            });
+
+            function performSearch(term) {
+                term = term.toLowerCase().trim();
+                
+                // Remove previous highlights
+                const highlighted = dumpContainer.querySelectorAll('.bd-highlight');
+                highlighted.forEach(el => {
+                    el.outerHTML = el.textContent; // Unwrap
+                });
+                
+                // Show everything if term is empty
+                if (!term) {
+                    dumpContainer.querySelectorAll('.bd-hidden').forEach(el => el.classList.remove('bd-hidden'));
+                    // Restore original expanded state? No, keep user's current state or default.
+                    return;
+                }
+
+                // Hide all rows and details first
+                const allRows = dumpContainer.querySelectorAll('.bd-row');
+                allRows.forEach(row => row.classList.add('bd-hidden'));
+                
+                const allSummaries = dumpContainer.querySelectorAll('.bd-summary');
+                // We don't hide summaries directly usually, but their parent details container
+                
+                // Find matches
+                const treeWalker = document.createTreeWalker(dumpContainer, NodeFilter.SHOW_TEXT, null, false);
+                const nodesToHighlight = [];
+
+                while(treeWalker.nextNode()) {
+                    const node = treeWalker.currentNode;
+                    if (node.textContent.toLowerCase().includes(term) && node.parentElement.tagName !== 'SCRIPT' && node.parentElement.tagName !== 'STYLE') {
+                         nodesToHighlight.push(node);
+                    }
+                }
+
+                if (nodesToHighlight.length === 0) {
+                     return; // Nothing found
+                }
+
+                // Process matches
+                nodesToHighlight.forEach(node => {
+                    const parent = node.parentElement;
+                    
+                    // Highlight (simple replacement)
+                    const regex = new RegExp(`(${term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+                    // Note: This is destructive to event listeners if any were attached to text, but we don't have any on text nodes.
+                    if (!parent.classList.contains('bd-highlight')) {
+                         parent.innerHTML = parent.innerHTML.replace(regex, '<span class="bd-highlight">$1</span>');
+                    }
+
+                    // Reveal DOM path
+                    let current = parent;
+                    while (current && current !== dumpContainer) {
+                        if (current.classList.contains('bd-row')) {
+                            current.classList.remove('bd-hidden');
+                        }
+                        if (current.tagName === 'DETAILS') {
+                            current.open = true;
+                            current.classList.remove('bd-hidden'); // Ensure details itself is visible
+                            
+                            // Also show the summary of this details
+                            // (Summary is usually visible if details is visible)
+                        }
+                        current = current.parentElement;
+                    }
+                });
+            }
         });
     </script>
 </body>

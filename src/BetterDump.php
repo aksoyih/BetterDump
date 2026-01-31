@@ -56,7 +56,11 @@ class BetterDump
     private static function findCaller(array $backtrace): ?array
     {
         foreach ($backtrace as $trace) {
-            if (isset($trace['file']) && !str_contains($trace['file'], 'better-dump/src')) {
+            if (
+                isset($trace['file']) &&
+                !str_contains($trace['file'], 'better-dump/src') &&
+                !str_ends_with($trace['file'], 'helpers.php')
+            ) {
                 return $trace;
             }
         }
@@ -71,7 +75,11 @@ class BetterDump
         $primaryCaller = null;
         for ($i = 0; $i < count($backtrace) - 1; $i++) {
             $current = $backtrace[$i];
-            if (isset($current['file']) && !str_contains($current['file'], 'better-dump/src')) {
+            if (
+                isset($current['file']) &&
+                !str_contains($current['file'], 'better-dump/src') &&
+                !str_ends_with($current['file'], 'helpers.php')
+            ) {
                 $primaryCaller = $i;
                 break;
             }
