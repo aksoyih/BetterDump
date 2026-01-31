@@ -7,10 +7,16 @@ use Aksoyih\Representations\Metadata;
 class BetterDump
 {
     private static string $editor = 'phpstorm'; // Default editor
+    private static bool $jsonMode = false;
 
     public static function setEditor(string $editor): void
     {
         self::$editor = $editor;
+    }
+
+    public static function outputJson(bool $enable = true): void
+    {
+        self::$jsonMode = $enable;
     }
 
     public static function dump(mixed $data, ?string $label = null): void
@@ -39,6 +45,15 @@ class BetterDump
             memory_get_peak_usage(),
             $label
         );
+
+        if (self::$jsonMode) {
+            if (!headers_sent()) {
+                header('Content-Type: application/json');
+            }
+            $renderer = new \Aksoyih\Renderers\JsonRenderer();
+            echo $renderer->render($metadata, $representation);
+            return;
+        }
 
         $dumpId = uniqid('bd_');
 
