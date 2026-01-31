@@ -41,7 +41,14 @@ class JsonRenderer
             'data' => $this->normalize($representation),
         ];
 
-        return json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        return json_encode(
+            $data,
+            JSON_PRETTY_PRINT
+            | JSON_UNESCAPED_SLASHES
+            | JSON_UNESCAPED_UNICODE
+            | JSON_INVALID_UTF8_SUBSTITUTE
+            | JSON_PARTIAL_OUTPUT_ON_ERROR
+        );
     }
 
     private function cleanPath(string $path): string
