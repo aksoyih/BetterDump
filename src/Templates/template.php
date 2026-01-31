@@ -322,7 +322,9 @@
 
         /* Syntax Highlighting */
         .syntax-string { color: var(--syntax-string); }
-        .syntax-int { color: var(--syntax-int); }
+        .syntax-int,
+        .syntax-integer,
+        .syntax-double { color: var(--syntax-int); }
         .syntax-bool { color: var(--syntax-bool); font-weight: bold; }
         .syntax-null { color: var(--syntax-null); font-style: italic; }
         .syntax-key { color: var(--syntax-key); }
