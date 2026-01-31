@@ -10,6 +10,7 @@ use Aksoyih\Representations\RecursionRepresentation;
 use Aksoyih\Representations\Representation;
 use Aksoyih\Representations\ResourceRepresentation;
 use Aksoyih\Representations\ScalarRepresentation;
+use Aksoyih\Utils\PathCleaner;
 
 class JsonRenderer
 {
@@ -17,7 +18,7 @@ class JsonRenderer
     {
         $trace = [];
         foreach ($metadata->trace as $index => $item) {
-            $file = isset($item['file']) ? $this->cleanPath($item['file']) : 'internal';
+            $file = isset($item['file']) ? PathCleaner::clean($item['file']) : 'internal';
             $line = $item['line'] ?? '';
             $method = $item['function'] ?? 'global';
             if (isset($item['class'])) {
@@ -30,7 +31,7 @@ class JsonRenderer
 
         $data = [
             'meta' => [
-                'file' => $this->cleanPath($metadata->file),
+                'file' => PathCleaner::clean($metadata->file),
                 'line' => $metadata->line,
                 'caller' => $metadata->caller,
                 'trace' => $trace,
@@ -49,11 +50,6 @@ class JsonRenderer
             | JSON_INVALID_UTF8_SUBSTITUTE
             | JSON_PARTIAL_OUTPUT_ON_ERROR
         );
-    }
-
-    private function cleanPath(string $path): string
-    {
-        return preg_replace('#^/var/www/(html/)?#', '', $path);
     }
 
     private function normalize(Representation $representation): mixed

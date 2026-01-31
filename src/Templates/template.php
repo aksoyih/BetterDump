@@ -532,7 +532,7 @@
                 // Clean up file path for display and editor linking
                 // Removing common container/server prefixes to reduce noise
                 $rawFilePath = $metadata->file;
-                $cleanFilePath = preg_replace('#^/var/www/(html/)?#', '', $rawFilePath);
+                $cleanFilePath = \Aksoyih\Utils\PathCleaner::clean($rawFilePath);
                 
                 $filePath = htmlspecialchars($cleanFilePath, ENT_QUOTES, 'UTF-8');
                 $line = htmlspecialchars($metadata->line, ENT_QUOTES, 'UTF-8');
@@ -754,8 +754,9 @@
                     const debugData = JSON.parse(rawDataEl.textContent);
                     const cleanData = reconstructData(debugData.data);
                     
-                    // Clean path helper
-                    const cleanPath = (path) => path ? path.replace(/^\/var\/www\/(html\/)?/, '') : 'internal';
+                    // Clean path helper (shared with PHP via PathCleaner)
+                    const cleanPathPattern = new RegExp(<?= json_encode(\Aksoyih\Utils\PathCleaner::patternForJs()) ?>);
+                    const cleanPath = (path) => path ? path.replace(cleanPathPattern, '') : 'internal';
                     
                     // Build context
                     let llmContext = `Context: ${cleanPath(debugData.meta.file)}:${debugData.meta.line}\n` +
