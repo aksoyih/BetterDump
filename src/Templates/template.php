@@ -10,7 +10,10 @@
     
     <style>
         :root {
+            /* Common Base */
             --color-primary: #0d7ff2;
+            
+            /* Dark Theme (Default) */
             --color-bg-dark: #101922;
             --color-panel-dark: #0d1117;
             --color-panel-border: #30363d;
@@ -23,7 +26,7 @@
             --syntax-bool: #d2a8ff;
             --syntax-null: #ff7b72;
             --syntax-key: #e6edf3;
-            --syntax-type: #d2a8ff; /* Same as bool/keyword */
+            --syntax-type: #d2a8ff;
             
             --badge-public-text: rgba(74, 222, 128, 0.8);
             --badge-public-bg: rgba(74, 222, 128, 0.1);
@@ -38,6 +41,35 @@
             --badge-private-border: rgba(248, 113, 113, 0.2);
         }
 
+        html.light {
+            --color-bg-dark: #ffffff;
+            --color-panel-dark: #f6f8fa;
+            --color-panel-border: #d0d7de;
+            --color-panel-hover: rgba(0,0,0,0.04);
+            --color-text-main: #1f2328;
+            --color-text-comment: #656d76;
+            
+            --syntax-string: #116329;
+            --syntax-int: #953800;
+            --syntax-bool: #8250df;
+            --syntax-null: #cf222e;
+            --syntax-key: #1f2328;
+            --syntax-type: #8250df;
+
+            --badge-public-text: #1a7f37;
+            --badge-public-bg: #dafbe1;
+            --badge-public-border: rgba(26, 127, 55, 0.2);
+            
+            --badge-protected-text: #9a6700;
+            --badge-protected-bg: #fff8c5;
+            --badge-protected-border: rgba(154, 103, 0, 0.2);
+            
+            --badge-private-text: #cf222e;
+            --badge-private-bg: #ffebe9;
+            --badge-private-border: rgba(207, 34, 46, 0.2);
+        }
+        
+        /* Ensure specific elements respect the theme */
         body {
             background-color: var(--color-bg-dark);
             color: var(--color-text-main);
@@ -59,7 +91,7 @@
         header {
             height: 3.5rem;
             border-bottom: 1px solid var(--color-panel-border);
-            background-color: rgba(13, 17, 23, 0.95);
+            background-color: var(--color-panel-dark);
             backdrop-filter: blur(4px);
             position: sticky;
             top: 0;
@@ -141,14 +173,14 @@
             gap: 0.375rem;
             padding: 0.25rem 0.75rem;
             border-radius: 9999px;
-            background-color: #21262d;
-            border: 1px solid rgba(48, 54, 61, 0.5);
+            background-color: var(--color-panel-hover);
+            border: 1px solid var(--color-panel-border);
         }
 
         .metric-value {
             font-size: 0.75rem;
             font-weight: 600;
-            color: #d1d5db; /* Gray 300 */
+            color: var(--color-text-main);
             font-family: 'JetBrains Mono', monospace;
         }
 
@@ -180,14 +212,14 @@
             border-radius: 9999px;
             background: transparent;
             border: none;
-            color: #9ca3af; /* Gray 400 */
+            color: var(--color-text-comment);
             cursor: pointer;
             transition: background-color 0.15s, color 0.15s;
         }
 
         .action-btn:hover {
-            background-color: #21262d;
-            color: white;
+            background-color: var(--color-panel-hover);
+            color: var(--color-text-main);
         }
 
         /* Main Content */
@@ -336,7 +368,7 @@
         footer {
             height: 2rem;
             border-top: 1px solid var(--color-panel-border);
-            background-color: #0d1117;
+            background-color: var(--color-panel-dark);
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -359,7 +391,7 @@
         }
         
         .footer-item:hover {
-            color: #d1d5db;
+            color: var(--color-text-main);
         }
 
         /* Search Input */
@@ -373,7 +405,7 @@
         }
 
         .search-input {
-            background-color: #21262d;
+            background-color: var(--color-panel-hover);
             border: 1px solid var(--color-panel-border);
             color: var(--color-text-main);
             border-radius: 0.25rem;
@@ -570,6 +602,9 @@
             <div class="divider"></div>
             <!-- Action Buttons -->
             <div class="actions">
+                <button id="<?= $dumpId ?>_theme-toggle-btn" class="action-btn" title="Toggle Theme">
+                    <span class="material-symbols-outlined" style="font-size: 20px;">light_mode</span>
+                </button>
                 <button id="<?= $dumpId ?>_search-toggle-btn" class="action-btn" title="Search">
                     <span class="material-symbols-outlined" style="font-size: 20px;">search</span>
                 </button>
@@ -633,6 +668,7 @@
             const collapseAllBtn = document.getElementById(dumpId + '_collapse-all-btn');
             const copyOutputBtn = document.getElementById(dumpId + '_copy-output-btn');
             const searchToggleBtn = document.getElementById(dumpId + '_search-toggle-btn');
+            const themeToggleBtn = document.getElementById(dumpId + '_theme-toggle-btn');
             const traceBtn = document.getElementById(dumpId + '_trace-btn');
             
             const searchContainer = document.getElementById(dumpId + '_search-container');
@@ -644,6 +680,33 @@
             
             const allDetails = dumpContainer.querySelectorAll('details');
             let allExpanded = true;
+
+            // Theme Logic
+            function setTheme(theme) {
+                const html = document.documentElement;
+                const icon = themeToggleBtn.querySelector('.material-symbols-outlined');
+                
+                if (theme === 'light') {
+                    html.classList.remove('dark');
+                    html.classList.add('light');
+                    icon.textContent = 'dark_mode';
+                    localStorage.setItem('bd_theme', 'light');
+                } else {
+                    html.classList.remove('light');
+                    html.classList.add('dark');
+                    icon.textContent = 'light_mode';
+                    localStorage.setItem('bd_theme', 'dark');
+                }
+            }
+            
+            // Initialize Theme
+            const savedTheme = localStorage.getItem('bd_theme') || 'dark';
+            setTheme(savedTheme);
+            
+            themeToggleBtn.addEventListener('click', () => {
+                const currentTheme = document.documentElement.classList.contains('light') ? 'light' : 'dark';
+                setTheme(currentTheme === 'light' ? 'dark' : 'light');
+            });
 
             // Collapse/Expand All
             collapseAllBtn.addEventListener('click', () => {
@@ -813,9 +876,12 @@
             function performSearch(term) {
                 term = term.toLowerCase().trim();
                 
+                // Clear previous highlights
                 const highlighted = dumpContainer.querySelectorAll('.bd-highlight');
                 highlighted.forEach(el => {
-                    el.outerHTML = el.textContent;
+                    const parent = el.parentNode;
+                    parent.replaceChild(document.createTextNode(el.textContent), el);
+                    parent.normalize(); // Merge adjacent text nodes
                 });
                 
                 if (!term) {
@@ -826,12 +892,20 @@
                 const allRows = dumpContainer.querySelectorAll('.bd-row');
                 allRows.forEach(row => row.classList.add('bd-hidden'));
                 
-                const treeWalker = document.createTreeWalker(dumpContainer, NodeFilter.SHOW_TEXT, null, false);
+                // We will walk the DOM text nodes
+                const treeWalker = document.createTreeWalker(dumpContainer, NodeFilter.SHOW_TEXT, {
+                    acceptNode: (node) => {
+                         // Skip scripts, styles, and empty text
+                         if (node.parentElement.tagName === 'SCRIPT' || node.parentElement.tagName === 'STYLE') return NodeFilter.FILTER_REJECT;
+                         if (!node.textContent.trim()) return NodeFilter.FILTER_SKIP;
+                         return NodeFilter.FILTER_ACCEPT;
+                    }
+                }, false);
+                
                 const nodesToHighlight = [];
-
                 while(treeWalker.nextNode()) {
                     const node = treeWalker.currentNode;
-                    if (node.textContent.toLowerCase().includes(term) && node.parentElement.tagName !== 'SCRIPT' && node.parentElement.tagName !== 'STYLE') {
+                    if (node.textContent.toLowerCase().includes(term)) {
                          nodesToHighlight.push(node);
                     }
                 }
@@ -839,13 +913,13 @@
                 if (nodesToHighlight.length === 0) return;
 
                 nodesToHighlight.forEach(node => {
-                    const parent = node.parentElement;
-                    const regex = new RegExp(`(${term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
-                    if (!parent.classList.contains('bd-highlight')) {
-                         parent.innerHTML = parent.innerHTML.replace(regex, '<span class="bd-highlight">$1</span>');
-                    }
+                    // Highlight the text
+                    const span = document.createElement('span');
+                    span.innerHTML = node.textContent.replace(new RegExp(`(${term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi'), '<span class="bd-highlight">$1</span>');
+                    node.parentNode.replaceChild(span, node);
 
-                    let current = parent;
+                    // Reveal parents
+                    let current = span.parentElement;
                     while (current && current !== dumpContainer) {
                         if (current.classList.contains('bd-row')) {
                             current.classList.remove('bd-hidden');
