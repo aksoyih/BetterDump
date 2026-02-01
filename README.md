@@ -2,7 +2,7 @@
 
 A professional-grade debugging library for PHP that provides a high-fidelity visual representation of variables, tailored for modern web development environments.
 
-![Screenshot](https://i.imgur.com/your-screenshot.png)
+![Screenshot](https://halukaksoy.dev/content/images/size/w1000/2026/02/Screenshot-2026-02-01-at-13.08.53.png)
 
 ## Installation
 
