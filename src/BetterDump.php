@@ -19,7 +19,7 @@ class BetterDump
         self::$jsonMode = $enable;
     }
 
-    public static function dump(mixed $data, ?string $label = null): void
+    public static function dump(mixed $data, ?string $label = null, bool $cleanOutput = false): void
     {
         $startTime = $_SERVER["REQUEST_TIME_FLOAT"] ?? microtime(true);
 
@@ -60,6 +60,13 @@ class BetterDump
             $renderer = new \Aksoyih\Renderers\CliRenderer();
             echo $renderer->render($metadata, $representation);
         } else {
+            if ($cleanOutput) {
+                while (ob_get_level()) {
+                    ob_end_clean();
+                }
+                // Fallback: Clear the body using JS in case output was already flushed
+                echo '<script>document.body.innerHTML = "";</script>';
+            }
             ob_start();
             $renderer = new \Aksoyih\Renderers\HtmlRenderer();
             echo $renderer->render($metadata, $representation, self::$editor, $dumpId);
