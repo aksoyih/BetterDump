@@ -13,11 +13,11 @@ composer require aksoyih/better-dump
 ## Usage
 
 ```php
-// Simple usage
+// Dump and continue execution
 bd($variable);
 
-// Multiple variables
-bd($var1, $var2, $var3);
+// Dump and die (stop execution)
+bdd($variable);
 
 // Labeled dump
 bd($user, 'User Object');
@@ -45,6 +45,18 @@ use Aksoyih\BetterDump;
 
 // Supported editors: 'vscode', 'phpstorm'
 BetterDump::setEditor('vscode');
+```
+
+### Production Safety
+
+BetterDump is disabled by default in production environments (`APP_ENV=production` or `APP_ENV=prod`) to prevent accidental leakage of sensitive data.
+
+To force enable it in production:
+
+```php
+use Aksoyih\BetterDump;
+
+BetterDump::allowProduction(true);
 ```
 
 ## Features
