@@ -36,6 +36,20 @@ BetterDump::outputJson(true);
 bd($data);
 ```
 
+### Laravel Integration
+
+BetterDump comes with a zero-config Service Provider for Laravel.
+
+1.  **Auto-Discovery:** The package is automatically discovered.
+2.  **Configuration:** It respects your `config('app.editor')` or `config('ignition.editor')` settings.
+3.  **Safety:** It automatically disables itself in `production` environments based on `APP_ENV`.
+
+To publish the configuration (Optional):
+
+```bash
+php artisan vendor:publish --provider="Aksoyih\Integrations\Laravel\BetterDumpServiceProvider"
+```
+
 ### Configuration
 
 You can configure the editor to open files in. The default is `phpstorm`.
@@ -59,10 +73,20 @@ use Aksoyih\BetterDump;
 BetterDump::allowProduction(true);
 ```
 
+### Keyboard Shortcuts
+
+| Shortcut | Action |
+| :--- | :--- |
+| `Cmd+K` / `Ctrl+K` | Toggle Search |
+| `/` | Focus Search |
+| `Escape` | Close Search / Close Stack Trace |
+| `Cmd+Click` | Open File in IDE |
+
 ## Features
 
-- **Beautiful UI:** Modern, zero-dependency interface with syntax highlighting.
-- **Search:** Built-in real-time search to filter keys and values.
+- **Beautiful UI:** Modern, zero-dependency interface with Light/Dark mode support.
+- **Search:** Built-in real-time fuzzy search to filter keys and values.
+- **Smart Helpers:** `bd()` (Dump & Continue) and `bdd()` (Dump & Die).
 - **Stack Trace:** View the full execution history leading to the dump.
 - **LLM-Ready Copy:** Copy the dump output as clean JSON with context, perfect for pasting into ChatGPT or Claude.
 - **Deep Linking:** Clickable file paths that open directly in your IDE (PhpStorm/VSCode).

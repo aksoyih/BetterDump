@@ -2,7 +2,7 @@
     "name": "aksoyih/better-dump",
     "description": "BetterDump: A professional-grade debugging library for PHP that provides a high-fidelity visual representation of variables, tailored for modern web development environments.",
     "type": "library",
-    "version": "2.0.4",
+    "version": "2.1.0",
     "keywords": ["debug", "dump", "var-dump", "dd", "pretty-dump"],
     "license": "MIT",
     "authors": [
@@ -28,6 +28,16 @@
     "autoload-dev": {
         "psr-4": {
             "Aksoyih\\Tests\\": "tests/"
+        }
+    },
+    "suggest": {
+        "illuminate/support": "Required for Laravel integration"
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Aksoyih\\Integrations\\Laravel\\BetterDumpServiceProvider"
+            ]
         }
     }
 }

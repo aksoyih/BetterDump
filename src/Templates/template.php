@@ -859,12 +859,49 @@
 
             // Search Toggle
             searchToggleBtn.addEventListener('click', () => {
+                toggleSearch();
+            });
+            
+            function toggleSearch() {
                 searchContainer.classList.toggle('active');
                 if (searchContainer.classList.contains('active')) {
                     searchInput.focus();
                 } else {
                     searchInput.value = '';
                     performSearch('');
+                    searchInput.blur();
+                }
+            }
+            
+            // Keyboard Shortcuts
+            document.addEventListener('keydown', (e) => {
+                // Toggle Search: Cmd+K or Ctrl+K
+                if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+                    e.preventDefault();
+                    if (!searchContainer.classList.contains('active')) {
+                        toggleSearch();
+                    } else {
+                        searchInput.focus();
+                    }
+                }
+                
+                // Focus Search: '/' (if not typing in input)
+                if (e.key === '/' && document.activeElement !== searchInput) {
+                    e.preventDefault();
+                    if (!searchContainer.classList.contains('active')) {
+                        toggleSearch();
+                    }
+                    searchInput.focus();
+                }
+                
+                // Close Search: Escape
+                if (e.key === 'Escape') {
+                    if (searchContainer.classList.contains('active')) {
+                        toggleSearch();
+                    }
+                    if (traceModal.classList.contains('active')) {
+                        traceModal.classList.remove('active');
+                    }
                 }
             });
 
