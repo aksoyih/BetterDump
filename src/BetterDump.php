@@ -8,6 +8,12 @@ class BetterDump
 {
     private static string $editor = 'phpstorm'; // Default editor
     private static bool $jsonMode = false;
+    private static bool $allowedInProduction = false;
+
+    public static function allowProduction(bool $allow = true): void
+    {
+        self::$allowedInProduction = $allow;
+    }
 
     public static function setEditor(string $editor): void
     {
@@ -21,6 +27,14 @@ class BetterDump
 
     public static function dump(mixed $data, ?string $label = null, bool $cleanOutput = false): void
     {
+        // Production Guard
+        if (!self::$allowedInProduction) {
+            $env = getenv('APP_ENV') ?: ($_ENV['APP_ENV'] ?? null);
+            if ($env === 'production' || $env === 'prod') {
+                return;
+            }
+        }
+
         $startTime = $_SERVER["REQUEST_TIME_FLOAT"] ?? microtime(true);
 
         // Pass the backtrace to the helper methods
@@ -93,8 +107,8 @@ class BetterDump
             }
             
             // Also catch the case where helpers.php might be loaded differently or symlinked
-            // If the function is 'bd' and we are in a file named helpers.php, skip it.
-            if (isset($trace['function']) && $trace['function'] === 'bd' && isset($trace['file']) && str_ends_with($trace['file'], 'helpers.php')) {
+            // If the function is 'bd' or 'bdd' and we are in a file named helpers.php, skip it.
+            if (isset($trace['function']) && in_array($trace['function'], ['bd', 'bdd'], true) && isset($trace['file']) && str_ends_with($trace['file'], 'helpers.php')) {
                 continue;
             }
 
