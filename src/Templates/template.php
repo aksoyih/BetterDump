@@ -149,6 +149,30 @@
             text-decoration: underline;
         }
 
+        .bd-notice {
+            position: fixed;
+            top: 4.25rem;
+            right: 1.5rem;
+            max-width: min(32rem, 90vw);
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            border: 1px solid rgba(220, 38, 38, 0.35);
+            background-color: rgba(220, 38, 38, 0.12);
+            color: #fecaca;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+            font-size: 0.85rem;
+            opacity: 0;
+            transform: translateY(-6px);
+            transition: opacity 0.2s ease, transform 0.2s ease;
+            pointer-events: none;
+            z-index: 60;
+        }
+
+        .bd-notice.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
         .caller-info {
             font-size: 0.75rem;
             color: var(--color-text-comment);
@@ -547,6 +571,7 @@
 
 <body>
     <div id="<?= $dumpId ?>" class="bd-wrapper">
+    <div id="<?= $dumpId ?>_notice" class="bd-notice" role="status" aria-live="polite"></div>
     <!-- Top Navigation Bar -->
     <header>
         <!-- Left: Context -->
@@ -565,16 +590,22 @@
                 // Removing common container/server prefixes to reduce noise
                 $rawFilePath = $metadata->file;
                 $cleanFilePath = \Aksoyih\Utils\PathCleaner::clean($rawFilePath);
+                $editorFilePath = \Aksoyih\Utils\PathCleaner::toLocalPath($rawFilePath);
+                $shouldPromptRoot = !\Aksoyih\Utils\PathCleaner::hasRootDirectory()
+                    && !\Aksoyih\Utils\PathCleaner::isAbsolutePath($cleanFilePath);
                 
                 $filePath = htmlspecialchars($cleanFilePath, ENT_QUOTES, 'UTF-8');
                 $line = htmlspecialchars($metadata->line, ENT_QUOTES, 'UTF-8');
                 
-                // For the editor link, we use the cleaned path as requested. 
-                // Note: Users might need path mapping if their local path differs significantly.
-                $editorLink = $editor === 'vscode' ? "vscode://file/{$cleanFilePath}:{$line}" : "phpstorm://open?file={$cleanFilePath}&line={$line}";
+                // For the editor link, we prefer a local path if configured.
+                $editorLink = $editor === 'vscode' ? "vscode://file/{$editorFilePath}:{$line}" : "phpstorm://open?file={$editorFilePath}&line={$line}";
+                $rootHint = "Set BetterDump::setRootDirectory('/path/to/project') to open the file in " . strtoupper($editor) . ".";
+                $rootHintAttr = $shouldPromptRoot
+                    ? ' data-root-required="1" data-root-message="' . htmlspecialchars($rootHint, ENT_QUOTES, 'UTF-8') . '"'
+                    : '';
                 ?>
-                <a class="file-link" href="<?= $editorLink ?>">
-                    <?= basename($cleanFilePath) ?>:<?= $line ?>
+                <a class="file-link" href="<?= $editorLink ?>"<?= $rootHintAttr ?>>
+                    Open file: <?= basename($cleanFilePath) ?>:<?= $line ?>
                 </a>
                 <?php if ($metadata->caller): ?>
                     <span class="caller-info">Called from <?= htmlspecialchars($metadata->caller, ENT_QUOTES, 'UTF-8') ?></span>
@@ -677,9 +708,33 @@
             const traceModal = document.getElementById(dumpId + '_trace-modal');
             const traceList = document.getElementById(dumpId + '_trace-list');
             const closeTraceBtn = document.getElementById(dumpId + '_close-trace-btn');
+            const noticeEl = document.getElementById(dumpId + '_notice');
+            let noticeTimeout = null;
             
             const allDetails = dumpContainer.querySelectorAll('details');
             let allExpanded = true;
+
+            function showNotice(message) {
+                if (!noticeEl) return;
+                noticeEl.textContent = message;
+                noticeEl.classList.add('active');
+                if (noticeTimeout) {
+                    clearTimeout(noticeTimeout);
+                }
+                noticeTimeout = setTimeout(() => {
+                    noticeEl.classList.remove('active');
+                }, 3500);
+            }
+
+            const rootRequiredLinks = document.querySelectorAll(`#${dumpId} .file-link[data-root-required="1"]`);
+            rootRequiredLinks.forEach((link) => {
+                link.addEventListener('click', (event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    const message = link.getAttribute('data-root-message') || 'Set BetterDump::setRootDirectory(...)';
+                    showNotice(message);
+                });
+            });
 
             // Theme Logic
             function setTheme(theme) {

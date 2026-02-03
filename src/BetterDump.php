@@ -3,6 +3,7 @@
 namespace Aksoyih;
 
 use Aksoyih\Representations\Metadata;
+use Aksoyih\Utils\PathCleaner;
 
 class BetterDump
 {
@@ -18,6 +19,11 @@ class BetterDump
     public static function setEditor(string $editor): void
     {
         self::$editor = $editor;
+    }
+
+    public static function setRootDirectory(?string $rootDirectory): void
+    {
+        PathCleaner::setRootDirectory($rootDirectory);
     }
 
     public static function outputJson(bool $enable = true): void

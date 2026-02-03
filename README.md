@@ -61,6 +61,15 @@ use Aksoyih\BetterDump;
 BetterDump::setEditor('vscode');
 ```
 
+You can also set a local root directory for editor links. This is useful when
+your runtime paths are relative or inside a container.
+
+```php
+use Aksoyih\BetterDump;
+
+BetterDump::setRootDirectory('/Volumes/HalukSSD/Development/Projects/cachebridge/test-server');
+```
+
 ### Production Safety
 
 BetterDump is disabled by default in production environments (`APP_ENV=production` or `APP_ENV=prod`) to prevent accidental leakage of sensitive data.
