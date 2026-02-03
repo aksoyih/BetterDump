@@ -67,7 +67,7 @@ your runtime paths are relative or inside a container.
 ```php
 use Aksoyih\BetterDump;
 
-BetterDump::setRootDirectory('/Volumes/HalukSSD/Development/Projects/cachebridge/test-server');
+BetterDump::setRootDirectory('/path/to/your/project');
 ```
 
 ### Production Safety
