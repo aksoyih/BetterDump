@@ -76,6 +76,20 @@ class HtmlRenderer
                     $output .= '<div class="bd-value">';
                     $output .= $this->renderRepresentation($item);
                     $output .= '</div>';
+                    
+                    // Add copy button for scalars
+                    if ($item instanceof ScalarRepresentation) {
+                        $json = json_encode([
+                            'key' => $key,
+                            'value' => $item->value,
+                            'type' => $item->type
+                        ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+                        $escapedJson = htmlspecialchars($json, ENT_QUOTES, 'UTF-8');
+                        $output .= '<button class="bd-copy-line" title="Copy as JSON" data-json="' . $escapedJson . '">';
+                        $output .= '<span class="material-symbols-outlined" style="font-size: 14px;">content_copy</span>';
+                        $output .= '</button>';
+                    }
+                    
                     $output .= '</div>';
                 }
                 $output .= '</div>';
@@ -108,6 +122,21 @@ class HtmlRenderer
                     $output .= '<div class="bd-value">';
                     $output .= $this->renderRepresentation($property->value);
                     $output .= '</div>';
+                    
+                    // Add copy button for scalars
+                    if ($property->value instanceof ScalarRepresentation) {
+                        $json = json_encode([
+                            'property' => $property->name,
+                            'value' => $property->value->value,
+                            'type' => $property->value->type,
+                            'visibility' => $property->visibility
+                        ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+                        $escapedJson = htmlspecialchars($json, ENT_QUOTES, 'UTF-8');
+                        $output .= '<button class="bd-copy-line" title="Copy as JSON" data-json="' . $escapedJson . '">';
+                        $output .= '<span class="material-symbols-outlined" style="font-size: 14px;">content_copy</span>';
+                        $output .= '</button>';
+                    }
+                    
                     $output .= '</div>';
                 }
                 $output .= '</div>';

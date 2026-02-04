@@ -313,6 +313,27 @@
             transition: transform 0.15s;
         }
 
+        .bd-copy-line {
+            opacity: 0;
+            background: transparent;
+            border: none;
+            color: var(--color-text-comment);
+            cursor: pointer;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            margin-left: auto; /* Push to right */
+            transition: opacity 0.15s, color 0.15s;
+        }
+
+        .bd-row:hover .bd-copy-line {
+            opacity: 1;
+        }
+
+        .bd-copy-line:hover {
+            color: var(--color-primary);
+        }
+
         .bd-details[open] > .bd-summary .bd-arrow {
             transform: rotate(90deg);
         }
@@ -817,6 +838,29 @@
                     const message = link.getAttribute('data-root-message') || 'Set BetterDump::setRootDirectory(...)';
                     showNotice(message);
                 });
+            });
+
+            // Row Copy Logic
+            dumpContainer.addEventListener('click', async (e) => {
+                const btn = e.target.closest('.bd-copy-line');
+                if (!btn) return;
+
+                e.stopPropagation(); // Prevent details toggling if nested
+                
+                const json = btn.getAttribute('data-json');
+                if (!json) return;
+
+                try {
+                    await navigator.clipboard.writeText(json);
+                    
+                    const originalIcon = btn.innerHTML;
+                    btn.innerHTML = '<span class="material-symbols-outlined" style="font-size: 14px; color: var(--color-primary);">check</span>';
+                    setTimeout(() => {
+                        btn.innerHTML = originalIcon;
+                    }, 1500);
+                } catch (err) {
+                    console.error('Failed to copy line:', err);
+                }
             });
 
             // Theme Logic
