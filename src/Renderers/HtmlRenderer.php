@@ -68,9 +68,14 @@ class HtmlRenderer
                 foreach ($representation->items as $key => $item) {
                     $escapedKey = htmlspecialchars((string) $key, ENT_QUOTES, 'UTF-8');
                     $output .= '<div class="bd-row">';
+                    $output .= '<div class="bd-badge-wrapper"></div>';
+                    $output .= '<div class="bd-key">';
                     $output .= "<span class=\"syntax-string\">\"{$escapedKey}\"</span>";
                     $output .= '<span class="syntax-operator">=&gt;</span>';
+                    $output .= '</div>';
+                    $output .= '<div class="bd-value">';
                     $output .= $this->renderRepresentation($item);
+                    $output .= '</div>';
                     $output .= '</div>';
                 }
                 $output .= '</div>';
@@ -97,8 +102,10 @@ class HtmlRenderer
                     $output .= '<div class="bd-badge-wrapper">';
                     $output .= "<span class=\"bd-badge {$badgeClass}\">" . substr($visibility, 0, 4) . "</span>";
                     $output .= '</div>';
-                    $output .= '<div class="bd-property">';
+                    $output .= '<div class="bd-key">';
                     $output .= "<span class=\"syntax-key\">{$escapedPropertyName}:</span>";
+                    $output .= '</div>';
+                    $output .= '<div class="bd-value">';
                     $output .= $this->renderRepresentation($property->value);
                     $output .= '</div>';
                     $output .= '</div>';

@@ -87,14 +87,15 @@
             margin: 0;
             display: flex;
             flex-direction: column;
-            min-height: 100vh;
-            overflow: hidden;
+            height: 100vh; /* Fixed height */
+            overflow: hidden; /* Prevent body scroll */
         }
 
         .bd-wrapper {
             display: flex;
             flex-direction: column;
-            min-height: 100vh;
+            height: 100%; /* Fill body */
+            overflow: hidden; /* Contain children */
         }
 
         /* Header */
@@ -273,8 +274,8 @@
         }
 
         .container {
-            max-width: 72rem; /* 6xl */
-            margin: 0 auto;
+            max-width: 100%;
+            margin: 0;
         }
 
         /* Dump Items */
@@ -380,14 +381,26 @@
             border-color: var(--badge-private-border);
         }
 
-        .bd-property {
-            flex: 1;
+        .bd-key {
+            min-width: 12rem;
+            flex-shrink: 0;
             display: flex;
+            align-items: center;
             gap: 0.5rem;
+            color: var(--syntax-key);
         }
 
-        /* Syntax Highlighting */
-        .syntax-string { color: var(--syntax-string); }
+        .bd-value {
+            flex: 1;
+            min-width: 0;
+        }
+
+        /* Dump Items */
+        .syntax-string { 
+            color: var(--syntax-string); 
+            white-space: pre-wrap; /* Wrap long strings */
+            word-break: break-word; /* Break long words if needed */
+        }
         .syntax-int,
         .syntax-integer,
         .syntax-double { color: var(--syntax-int); }
