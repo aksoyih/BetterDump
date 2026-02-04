@@ -4,10 +4,11 @@
     <meta charset="utf-8" />
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
     <title>Debug Output</title>
-    <!-- Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet" />
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet" />
     
+    <style>
+        <?= $fontsCss ?>
+        <?= $prismCss ?>
+    </style>
     <style>
         :root {
             /* Common Base */
@@ -87,14 +88,15 @@
             margin: 0;
             display: flex;
             flex-direction: column;
-            min-height: 100vh;
-            overflow: hidden;
+            height: 100vh; /* Fixed height */
+            overflow: hidden; /* Prevent body scroll */
         }
 
         .bd-wrapper {
             display: flex;
             flex-direction: column;
-            min-height: 100vh;
+            height: 100%; /* Fill body */
+            overflow: hidden; /* Contain children */
         }
 
         /* Header */
@@ -273,8 +275,8 @@
         }
 
         .container {
-            max-width: 72rem; /* 6xl */
-            margin: 0 auto;
+            max-width: 100%;
+            margin: 0;
         }
 
         /* Dump Items */
@@ -312,7 +314,29 @@
             transition: transform 0.15s;
         }
 
-        .bd-details[open] > .bd-summary .bd-arrow {
+        .bd-copy-line {
+            opacity: 0;
+            background: transparent;
+            border: none;
+            color: var(--color-text-comment);
+            cursor: pointer;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            margin-left: auto; /* Push to right */
+            transition: opacity 0.15s, color 0.15s;
+        }
+
+        .bd-row:hover .bd-copy-line {
+            opacity: 1;
+        }
+
+        .bd-copy-line:hover {
+            color: var(--color-primary);
+        }
+
+        .bd-details[open] > .bd-summary .bd-arrow,
+        .code-snippet[open] > summary .bd-arrow {
             transform: rotate(90deg);
         }
 
@@ -323,15 +347,21 @@
         }
 
         .bd-content {
-            padding-left: 0.5rem;
-            border-left: 1px solid rgba(48, 54, 61, 0.3);
-            margin-left: 0.4375rem; /* 7px */
+            padding-left: 0.75rem;
+            border-left: 1px solid var(--color-panel-border);
+            margin-left: 0.35rem;
             margin-top: 0.25rem;
+            position: relative;
         }
         
-        /* Specialized indent for array items to align nicely */
+        /* Highlight scope line on hover */
+        .bd-details:hover > .bd-content {
+            border-left-color: var(--color-primary);
+        }
+        
+        /* Tighter nested indent */
         .bd-content .bd-content {
-             padding-left: 1.5rem; /* indentation for nested items */
+             padding-left: 1rem;
         }
 
         .bd-row {
@@ -380,14 +410,26 @@
             border-color: var(--badge-private-border);
         }
 
-        .bd-property {
-            flex: 1;
+        .bd-key {
+            min-width: 12rem;
+            flex-shrink: 0;
             display: flex;
+            align-items: center;
             gap: 0.5rem;
+            color: var(--syntax-key);
         }
 
-        /* Syntax Highlighting */
-        .syntax-string { color: var(--syntax-string); }
+        .bd-value {
+            flex: 1;
+            min-width: 0;
+        }
+
+        /* Dump Items */
+        .syntax-string { 
+            color: var(--syntax-string); 
+            white-space: pre-wrap; /* Wrap long strings */
+            word-break: break-word; /* Break long words if needed */
+        }
         .syntax-int,
         .syntax-integer,
         .syntax-double { color: var(--syntax-int); }
@@ -588,36 +630,47 @@
             font-size: 0.8rem;
         }
 
-        .code-row {
-            display: flex;
-            line-height: 1.5;
-        }
-
-        .code-row.active {
-            background-color: rgba(239, 68, 68, 0.15); /* Red hint */
-        }
-        
-        .code-row.active .line-number {
-             color: #ef4444;
-             font-weight: bold;
-             border-right-color: #ef4444;
-        }
-
-        .line-number {
-            width: 3rem;
-            text-align: right;
-            padding: 0 0.5rem;
+        .code-snippet summary {
+            padding: 0.5rem 0.5rem;
+            cursor: pointer;
+            list-style: none;
+            background-color: rgba(255, 255, 255, 0.02);
+            border-bottom: 1px solid transparent;
             color: var(--color-text-comment);
-            border-right: 1px solid var(--color-panel-border);
-            background-color: rgba(0,0,0,0.1);
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            transition: background-color 0.15s;
             user-select: none;
         }
 
-        .line-content {
-            padding: 0 0.5rem;
-            white-space: pre;
+        .code-snippet[open] summary {
+            border-bottom-color: var(--color-panel-border);
             color: var(--color-text-main);
-            overflow-x: auto;
+        }
+
+        .code-snippet summary:hover {
+            background-color: var(--color-panel-hover);
+        }
+        
+        .code-snippet summary::-webkit-details-marker {
+            display: none;
+        }
+
+        /* Keep Markup Plugin Styles */
+        mark.bd-line-marker {
+            background: linear-gradient(to right, rgba(255, 255, 0, 0.15), transparent);
+            color: inherit;
+            display: block; /* Ensure it takes full width if possible, or behave like the line */
+            text-shadow: 0 0 1px rgba(255, 200, 0, 0.5);
+            margin: 0 -0.5rem;
+            padding: 0 0.5rem;
+        }
+        
+        .is-exception mark.bd-line-marker {
+            background: linear-gradient(to right, rgba(255, 0, 0, 0.15), transparent);
+            text-shadow: 0 0 1px rgba(255, 0, 0, 0.5);
         }
     </style>
 </head>
@@ -630,7 +683,7 @@
         <!-- Left: Context -->
         <div class="header-left">
             <div class="icon-box">
-                <span class="material-symbols-outlined" style="font-size: 20px;"><?= $metadata->isException ? 'warning' : 'terminal' ?></span>
+                <span class="material-symbols-outlined" style="font-size: 20px;"><?= $metadata->isException ? $icons['warning'] : $icons['terminal'] ?></span>
             </div>
             <?php if ($metadata->label): ?>
                 <div style="display: flex; align-items: center; gap: 0.5rem;">
@@ -675,11 +728,11 @@
             <!-- Metrics Pills -->
             <div class="metrics">
                 <div class="metric-pill">
-                    <span class="material-symbols-outlined" style="font-size: 14px; color: var(--color-text-comment);">schedule</span>
+                    <span class="material-symbols-outlined" style="font-size: 14px; color: var(--color-text-comment);"><?= $icons['schedule'] ?></span>
                     <span class="metric-value"><?= round($metadata->executionTime, 2) ?>ms</span>
                 </div>
                 <div class="metric-pill">
-                    <span class="material-symbols-outlined" style="font-size: 14px; color: var(--color-text-comment);">memory</span>
+                    <span class="material-symbols-outlined" style="font-size: 14px; color: var(--color-text-comment);"><?= $icons['memory'] ?></span>
                     <span class="metric-value"><?= $this->formatBytes($metadata->peakMemoryUsage) ?></span>
                 </div>
             </div>
@@ -687,19 +740,19 @@
             <!-- Action Buttons -->
             <div class="actions">
                 <button id="<?= $dumpId ?>_theme-toggle-btn" class="action-btn" title="Toggle Theme">
-                    <span class="material-symbols-outlined" style="font-size: 20px;">light_mode</span>
+                    <span class="material-symbols-outlined" style="font-size: 20px;"><?= $icons['light_mode'] ?></span>
                 </button>
                 <button id="<?= $dumpId ?>_search-toggle-btn" class="action-btn" title="Search">
-                    <span class="material-symbols-outlined" style="font-size: 20px;">search</span>
+                    <span class="material-symbols-outlined" style="font-size: 20px;"><?= $icons['search'] ?></span>
                 </button>
                 <button id="<?= $dumpId ?>_trace-btn" class="action-btn" title="Stack Trace">
-                    <span class="material-symbols-outlined" style="font-size: 20px;">history</span>
+                    <span class="material-symbols-outlined" style="font-size: 20px;"><?= $icons['history'] ?></span>
                 </button>
                 <button id="<?= $dumpId ?>_copy-output-btn" class="action-btn" title="Copy Output">
-                    <span class="material-symbols-outlined" style="font-size: 20px;">content_copy</span>
+                    <span class="material-symbols-outlined" style="font-size: 20px;"><?= $icons['content_copy'] ?></span>
                 </button>
                 <button id="<?= $dumpId ?>_collapse-all-btn" class="action-btn" title="Collapse All">
-                    <span class="material-symbols-outlined" style="font-size: 20px;">unfold_less</span>
+                    <span class="material-symbols-outlined" style="font-size: 20px;"><?= $icons['unfold_less'] ?></span>
                 </button>
             </div>
         </div>
@@ -708,14 +761,27 @@
     <main>
         <div class="container" id="<?= $dumpId ?>_dump-container">
             <?php if (!empty($metadata->codeSnippet)): ?>
-                <div class="code-snippet">
-                    <?php foreach ($metadata->codeSnippet as $num => $code): ?>
-                        <div class="code-row <?= $num === $metadata->line ? 'active' : '' ?>">
-                            <div class="line-number"><?= $num ?></div>
-                            <div class="line-content"><?= htmlspecialchars($code, ENT_QUOTES, 'UTF-8') ?></div>
-                        </div>
-                    <?php endforeach; ?>
-                </div>
+                <details class="code-snippet">
+                    <summary>
+                        <span class="material-symbols-outlined bd-arrow"><?= $icons['arrow_right'] ?></span>
+                        <span>Code Snippet</span>
+                    </summary>
+                    <?php
+                        $startLine = array_key_first($metadata->codeSnippet);
+                        $lines = [];
+                        foreach ($metadata->codeSnippet as $num => $codeLine) {
+                            $escapedLine = htmlspecialchars($codeLine, ENT_QUOTES, 'UTF-8');
+                            if ($num === $metadata->line) {
+                                // Use keep-markup to preserve this tag
+                                $lines[] = '<mark class="bd-line-marker">' . $escapedLine . '</mark>';
+                            } else {
+                                $lines[] = $escapedLine;
+                            }
+                        }
+                        $code = implode("\n", $lines);
+                    ?>
+                    <pre class="line-numbers" data-start="<?= $startLine ?>" data-line="<?= $metadata->line ?>"><code class="language-php"><?= $code ?></code></pre>
+                </details>
             <?php endif; ?>
 
             <?= $this->renderRepresentation($representation) ?>
@@ -729,7 +795,7 @@
             <div class="modal-header">
                 <h3>Stack Trace</h3>
                 <button id="<?= $dumpId ?>_close-trace-btn" class="action-btn">
-                    <span class="material-symbols-outlined">close</span>
+                    <span class="material-symbols-outlined"><?= $icons['close'] ?></span>
                 </button>
             </div>
             <div class="modal-body" id="<?= $dumpId ?>_trace-list"></div>
@@ -740,7 +806,7 @@
     <footer>
         <div class="footer-left">
             <div class="footer-item">
-                <span class="material-symbols-outlined" style="font-size: 14px;">bug_report</span>
+                <span class="material-symbols-outlined" style="font-size: 14px;"><?= $icons['bug_report'] ?></span>
                 <span>PHP <?= PHP_VERSION ?></span>
             </div>
             <!-- Framework detection could go here -->
@@ -758,8 +824,13 @@
     </script>
 
     <script>
+        <?= $prismJs ?>
+    </script>
+
+    <script>
         (function() {
             const dumpId = '<?= $dumpId ?>';
+            const icons = <?= json_encode($icons) ?>;
             const collapseAllBtn = document.getElementById(dumpId + '_collapse-all-btn');
             const copyOutputBtn = document.getElementById(dumpId + '_copy-output-btn');
             const searchToggleBtn = document.getElementById(dumpId + '_search-toggle-btn');
@@ -800,20 +871,43 @@
                 });
             });
 
+            // Row Copy Logic
+            dumpContainer.addEventListener('click', async (e) => {
+                const btn = e.target.closest('.bd-copy-line');
+                if (!btn) return;
+
+                e.stopPropagation(); // Prevent details toggling if nested
+                
+                const json = btn.getAttribute('data-json');
+                if (!json) return;
+
+                try {
+                    await navigator.clipboard.writeText(json);
+                    
+                    const originalContent = btn.innerHTML;
+                    btn.innerHTML = '<span class="material-symbols-outlined" style="font-size: 14px; color: var(--color-primary);">' + icons['check'] + '</span>';
+                    setTimeout(() => {
+                        btn.innerHTML = originalContent;
+                    }, 1500);
+                } catch (err) {
+                    console.error('Failed to copy line:', err);
+                }
+            });
+
             // Theme Logic
             function setTheme(theme) {
                 const html = document.documentElement;
-                const icon = themeToggleBtn.querySelector('.material-symbols-outlined');
+                const iconContainer = themeToggleBtn.querySelector('.material-symbols-outlined');
                 
                 if (theme === 'light') {
                     html.classList.remove('dark');
                     html.classList.add('light');
-                    icon.textContent = 'dark_mode';
+                    iconContainer.innerHTML = icons['dark_mode'];
                     localStorage.setItem('bd_theme', 'light');
                 } else {
                     html.classList.remove('light');
                     html.classList.add('dark');
-                    icon.textContent = 'light_mode';
+                    iconContainer.innerHTML = icons['light_mode'];
                     localStorage.setItem('bd_theme', 'dark');
                 }
             }
@@ -833,7 +927,7 @@
                 allDetails.forEach(detail => {
                     detail.open = allExpanded;
                 });
-                collapseAllBtn.innerHTML = allExpanded ? '<span class="material-symbols-outlined" style="font-size: 20px;">unfold_less</span>' : '<span class="material-symbols-outlined" style="font-size: 20px;">unfold_more</span>';
+                collapseAllBtn.innerHTML = '<span class="material-symbols-outlined" style="font-size: 20px;">' + (allExpanded ? icons['unfold_less'] : icons['unfold_more']) + '</span>';
                 collapseAllBtn.title = allExpanded ? 'Collapse All' : 'Expand All';
             });
 
@@ -971,11 +1065,11 @@
                     await navigator.clipboard.writeText(llmContext);
                     
                     // Visual feedback
-                    const originalIcon = copyOutputBtn.innerHTML;
-                    copyOutputBtn.innerHTML = '<span class="material-symbols-outlined" style="font-size: 20px; color: #4ade80;">check</span>';
+                    const originalContent = copyOutputBtn.innerHTML;
+                    copyOutputBtn.innerHTML = '<span class="material-symbols-outlined" style="font-size: 20px; color: #4ade80;">' + icons['check'] + '</span>';
                     
                     setTimeout(() => {
-                        copyOutputBtn.innerHTML = originalIcon;
+                        copyOutputBtn.innerHTML = originalContent;
                     }, 2000);
                     
                 } catch (err) {
