@@ -23,6 +23,19 @@ bdd($variable);
 bd($user, 'User Object');
 ```
 
+### Global Error Handling
+
+BetterDump can act as your application's global error and exception handler, providing a beautiful "Blue Screen of Death" when your code crashes, even if `display_errors` is off in `php.ini`.
+
+```php
+use Aksoyih\ErrorHandler;
+
+(new ErrorHandler())->register();
+
+// Now even fatal errors or unhandled exceptions will be rendered by BetterDump
+throw new Exception("Oops!");
+```
+
 ### JSON Output Mode
 
 For debugging API responses, you can switch to JSON mode. This will output the dump as a formatted JSON response with `Content-Type: application/json` headers.
@@ -95,6 +108,7 @@ BetterDump::allowProduction(true);
 
 - **Beautiful UI:** Modern, zero-dependency interface with Light/Dark mode support.
 - **Search:** Built-in real-time fuzzy search to filter keys and values.
+- **Code Snippet Preview:** Automatically displays the code surrounding an error or dump location with syntax highlighting.
 - **Smart Helpers:** `bd()` (Dump & Continue) and `bdd()` (Dump & Die).
 - **Stack Trace:** View the full execution history leading to the dump.
 - **LLM-Ready Copy:** Copy the dump output as clean JSON with context, perfect for pasting into ChatGPT or Claude.
