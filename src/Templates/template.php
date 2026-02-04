@@ -68,6 +68,16 @@
             --badge-private-bg: #ffebe9;
             --badge-private-border: rgba(207, 34, 46, 0.2);
         }
+
+        /* Exception Mode Overrides */
+        .bd-wrapper.is-exception {
+            --color-primary: #ef4444; /* Red 500 */
+        }
+
+        .bd-wrapper.is-exception header {
+            background-color: rgba(69, 10, 10, 0.95); /* Dark Red */
+            border-bottom-color: rgba(239, 68, 68, 0.3);
+        }
         
         /* Ensure specific elements respect the theme */
         body {
@@ -566,18 +576,61 @@
         .trace-arg {
             color: var(--color-text-comment);
         }
+
+        /* Code Snippet */
+        .code-snippet {
+            margin: 1rem 0;
+            background-color: var(--color-panel-dark);
+            border: 1px solid var(--color-panel-border);
+            border-radius: 0.5rem;
+            overflow: hidden;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+        }
+
+        .code-row {
+            display: flex;
+            line-height: 1.5;
+        }
+
+        .code-row.active {
+            background-color: rgba(239, 68, 68, 0.15); /* Red hint */
+        }
+        
+        .code-row.active .line-number {
+             color: #ef4444;
+             font-weight: bold;
+             border-right-color: #ef4444;
+        }
+
+        .line-number {
+            width: 3rem;
+            text-align: right;
+            padding: 0 0.5rem;
+            color: var(--color-text-comment);
+            border-right: 1px solid var(--color-panel-border);
+            background-color: rgba(0,0,0,0.1);
+            user-select: none;
+        }
+
+        .line-content {
+            padding: 0 0.5rem;
+            white-space: pre;
+            color: var(--color-text-main);
+            overflow-x: auto;
+        }
     </style>
 </head>
 
 <body>
-    <div id="<?= $dumpId ?>" class="bd-wrapper">
+    <div id="<?= $dumpId ?>" class="bd-wrapper <?= $metadata->isException ? 'is-exception' : '' ?>">
     <div id="<?= $dumpId ?>_notice" class="bd-notice" role="status" aria-live="polite"></div>
     <!-- Top Navigation Bar -->
     <header>
         <!-- Left: Context -->
         <div class="header-left">
             <div class="icon-box">
-                <span class="material-symbols-outlined" style="font-size: 20px;">terminal</span>
+                <span class="material-symbols-outlined" style="font-size: 20px;"><?= $metadata->isException ? 'warning' : 'terminal' ?></span>
             </div>
             <?php if ($metadata->label): ?>
                 <div style="display: flex; align-items: center; gap: 0.5rem;">
@@ -654,6 +707,17 @@
     <!-- Main Content Area -->
     <main>
         <div class="container" id="<?= $dumpId ?>_dump-container">
+            <?php if (!empty($metadata->codeSnippet)): ?>
+                <div class="code-snippet">
+                    <?php foreach ($metadata->codeSnippet as $num => $code): ?>
+                        <div class="code-row <?= $num === $metadata->line ? 'active' : '' ?>">
+                            <div class="line-number"><?= $num ?></div>
+                            <div class="line-content"><?= htmlspecialchars($code, ENT_QUOTES, 'UTF-8') ?></div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            <?php endif; ?>
+
             <?= $this->renderRepresentation($representation) ?>
             <div style="height: 5rem;"></div> <!-- Bottom Padding -->
         </div>
@@ -876,8 +940,16 @@
                     const cleanPathPattern = new RegExp(<?= json_encode(\Aksoyih\Utils\PathCleaner::patternForJs()) ?>);
                     const cleanPath = (path) => path ? path.replace(cleanPathPattern, '') : 'internal';
                     
+                    let llmContext = '';
+
+                    // Exception Header
+                    if (debugData.meta.isException) {
+                        llmContext += '🚨 **FATAL ERROR / EXCEPTION** 🚨\n';
+                        llmContext += '================================\n';
+                    }
+
                     // Build context
-                    let llmContext = `Context: ${cleanPath(debugData.meta.file)}:${debugData.meta.line}\n` +
+                    llmContext += `Context: ${cleanPath(debugData.meta.file)}:${debugData.meta.line}\n` +
                                      (debugData.meta.caller ? `Caller: ${debugData.meta.caller}\n` : '');
 
                     // Build Trace

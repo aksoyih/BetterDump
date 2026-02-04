@@ -12,7 +12,9 @@ class Metadata
         public float $executionTime,
         public float $memoryUsage,
         public float $peakMemoryUsage,
-        public ?string $label
+        public ?string $label,
+        public bool $isException = false,
+        public array $codeSnippet = []
     ) {
     }
 }

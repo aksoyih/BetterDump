@@ -48,6 +48,14 @@ class BetterDump
         $caller = self::findCaller($backtrace);
         $secondaryTrace = self::getSecondaryTrace($backtrace);
 
+        $file = $caller['file'] ?? 'unknown';
+        $line = $caller['line'] ?? 0;
+
+        if ($data instanceof \Throwable) {
+            $file = $data->getFile();
+            $line = $data->getLine();
+        }
+
         $parser = new Parser();
         $representation = $parser->parse($data);
 
@@ -55,14 +63,16 @@ class BetterDump
         $endMemory = memory_get_usage();
 
         $metadata = new Metadata(
-            $caller['file'] ?? 'unknown',
-            $caller['line'] ?? 0,
+            $file,
+            $line,
             $secondaryTrace, // Use the new secondary trace method
             array_values(self::getCleanTrace($backtrace)),
             ($endTime - $startTime) * 1000,
             $endMemory, // Use the end memory, not the difference
             memory_get_peak_usage(),
-            $label
+            $label,
+            $data instanceof \Throwable,
+            self::getCodeSnippet($file, $line)
         );
 
         if (self::$jsonMode) {
@@ -92,6 +102,42 @@ class BetterDump
             echo $renderer->render($metadata, $representation, self::$editor, $dumpId);
             ob_end_flush();
         }
+    }
+
+    /**
+     * Get a snippet of code around the given line.
+     */
+    private static function getCodeSnippet(string $file, int $line, int $radius = 10): array
+    {
+        if (!file_exists($file) || !is_readable($file)) {
+            return [];
+        }
+
+        // Use SplFileObject for efficient line reading
+        $fileObject = new \SplFileObject($file);
+        
+        // Calculate range
+        // SplFileObject lines are 0-indexed, $line is 1-indexed.
+        // Target index = $line - 1
+        $targetIndex = $line - 1;
+        $startLine = max(0, $targetIndex - $radius);
+        $endLine = $targetIndex + $radius;
+
+        $snippet = [];
+        
+        try {
+            $fileObject->seek($startLine);
+            
+            while ($fileObject->key() <= $endLine && !$fileObject->eof()) {
+                $snippet[$fileObject->key() + 1] = rtrim($fileObject->current());
+                $fileObject->next();
+            }
+        } catch (\Throwable $e) {
+            // Fail silently if seek fails
+            return [];
+        }
+
+        return $snippet;
     }
 
     /**
