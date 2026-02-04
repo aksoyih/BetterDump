@@ -324,15 +324,21 @@
         }
 
         .bd-content {
-            padding-left: 0.5rem;
-            border-left: 1px solid rgba(48, 54, 61, 0.3);
-            margin-left: 0.4375rem; /* 7px */
+            padding-left: 0.75rem;
+            border-left: 1px solid var(--color-panel-border);
+            margin-left: 0.35rem;
             margin-top: 0.25rem;
+            position: relative;
         }
         
-        /* Specialized indent for array items to align nicely */
+        /* Highlight scope line on hover */
+        .bd-details:hover > .bd-content {
+            border-left-color: var(--color-primary);
+        }
+        
+        /* Tighter nested indent */
         .bd-content .bd-content {
-             padding-left: 1.5rem; /* indentation for nested items */
+             padding-left: 1rem;
         }
 
         .bd-row {
